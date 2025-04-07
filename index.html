@@ -46,11 +46,19 @@
         let currentData = {};
 
         async function fetchParticipants() {
-            const res = await fetch('/participants');
-            currentData = await res.json();
-            buildWheel();
-        }
+            const res = await fetch("https://botcoachbackend.onrender.com/participants");
+            const data = await res.json();
 
+            console.log("Participants à jour :", data);
+            currentData = data;
+            buildWheel(); // ou updateWheel()
+        }
+        
+        // ⏱️ Rafraîchir toutes les 5 secondes
+        setInterval(fetchParticipants, 5000);
+
+        // ⏱️ Et lancer une première fois au chargement
+        fetchParticipants();
         function buildWheel() {
             const names = Object.keys(currentData);
 
