@@ -17,22 +17,45 @@
             margin: 0;
             padding: 0;
         }
+
         h1 {
             font-size: 48px;
             margin-top: 30px;
             text-shadow: 2px 2px 8px #ff0059;
             animation: pulse 2s infinite;
         }
+
         @keyframes pulse {
             0%, 100% { transform: scale(1); color: #ff0059; }
             50% { transform: scale(1.05); color: #00d4ff; }
         }
+
+        .wheel-container {
+            position: relative;
+            width: 500px;
+            margin: 0 auto;
+        }
+
+        .pointer {
+            position: absolute;
+            left: 50%;
+            top: -20px;
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 20px solid #ff0059;
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+
         canvas {
             display: block;
-            margin: 30px auto;
+            margin: 30px auto 10px auto;
             box-shadow: 0 0 25px #00ffea;
             border-radius: 12px;
         }
+
         button {
             margin: 10px;
             padding: 12px 30px;
@@ -47,10 +70,12 @@
             box-shadow: 0 0 10px #ff0059;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
+
         button:hover {
             transform: scale(1.05);
             box-shadow: 0 0 20px #00d4ff;
         }
+
         #game-id {
             margin-top: 20px;
             font-size: 28px;
@@ -62,8 +87,12 @@
 </head>
 <body>
     <h1>🎮 Roue du coaching – Yendo_Jr ⚡</h1>
-    <canvas id="canvas" width="500" height="500"></canvas>
-    <br>
+
+    <div class="wheel-container">
+        <div class="pointer"></div>
+        <canvas id="canvas" width="500" height="500"></canvas>
+    </div>
+
     <button onclick="spinWheel()">Lancer la roue</button>
     <button onclick="resetWheel()">Reset la roue</button>
     <div id="game-id"></div>
@@ -93,18 +122,32 @@
             const names = Object.keys(currentData);
             if (!names.length) names.push("Personne 😢");
 
+            const segmentColors = [
+                "#ff0059", "#00d4ff", "#ffd500", "#7eff00", "#00ffea", "#ff8700", "#aa00ff"
+            ];
+
             wheel = new Winwheel({
                 canvasId: 'canvas',
                 numSegments: names.length,
-                outerRadius: 200,
-                textFontSize: 16,
-                segments: names.map(name => ({ text: name })),
+                outerRadius: 220,
+                textFontSize: 18,
+                textOrientation: 'horizontal',
+                textAlignment: 'outer',
+                segments: names.map((name, i) => ({
+                    text: name,
+                    fillStyle: segmentColors[i % segmentColors.length],
+                    textFillStyle: '#ffffff'
+                })),
                 animation: {
                     type: 'spinToStop',
-                    duration: 5,
-                    spins: 8,
+                    duration: 6,
+                    spins: 10,
+                    easing: 'Power3.easeOut',
                     callbackFinished: alertWinner
-                }
+                },
+                lineWidth: 5,
+                strokeStyle: "#111",
+                innerRadius: 20
             });
         }
 
@@ -115,7 +158,6 @@
             buildWheel();
         }
 
-
         function spinWheel() {
             const victory = document.getElementById('victory-audio');
             victory.play().then(() => {
@@ -125,52 +167,45 @@
                 console.log("🔇 Audio autoplay bloqué (normal avant clic utilisateur)");
             });
 
-        if (wheel) {
+            if (wheel) {
                 wheel.startAnimation();
             }
         }
 
-
-
         function alertWinner(indicatedSegment) {
-    const winner = indicatedSegment.text;
-    const gameID = currentData[winner] || "Pas d'ID";
-    document.getElementById('game-id').innerText = `🎉 GG ${winner} ! ID de game : ${gameID}`;
+            const winner = indicatedSegment.text;
+            const gameID = currentData[winner] || "Pas d'ID";
+            document.getElementById('game-id').innerText = `🎉 GG ${winner} ! ID de game : ${gameID}`;
 
-    // 🎉 Confettis
-    confetti({
-        particleCount: 150,
-        spread: 90,
-        origin: { y: 0.6 }
-    });
+            confetti({
+                particleCount: 150,
+                spread: 90,
+                origin: { y: 0.6 }
+            });
 
-    // 🔊 Son épique
-    document.getElementById('victory-audio').play();
+            document.getElementById('victory-audio').play();
 
-    // Supprime le gagnant et reconstruit
-    delete currentData[winner];
-    setTimeout(() => {
-        rebuildWheelAfterWinner();
-    }, 1000);
-}
-
+            delete currentData[winner];
+            setTimeout(() => {
+                rebuildWheelAfterWinner();
+            }, 1000);
+        }
 
         async function resetWheel() {
-    document.getElementById('game-id').innerText = '';
-    currentData = {};
-    lastParticipantsKey = "";
+            document.getElementById('game-id').innerText = '';
+            currentData = {};
+            lastParticipantsKey = "";
 
-    // ⚠️ Attend la réponse de l'API avant de rebuild
-    await fetch("https://botcoachbackend.onrender.com/participants", {
-        method: 'DELETE'
-    });
+            await fetch("https://botcoachbackend.onrender.com/participants", {
+                method: 'DELETE'
+            });
 
-    // Recharge les participants depuis le backend (à jour)
-    await fetchParticipants();
-}
+            await fetchParticipants();
+        }
     </script>
-<audio id="victory-audio" preload="auto">
-    <source src="https://cdn.pixabay.com/audio/2022/11/16/audio_06c1a8d1f2.mp3" type="audio/mpeg">
-</audio>
+
+    <audio id="victory-audio" preload="auto">
+        <source src="sounds/victory.mp3" type="audio/mpeg">
+    </audio>
 </body>
 </html>
