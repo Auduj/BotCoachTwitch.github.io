@@ -6,6 +6,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/1.20.3/TweenMax.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/zarocknz/javascript-winwheel@master/Winwheel.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
     <style>
         body {
             background: radial-gradient(ellipse at center, #1a1a2e 0%, #0f0f1a 100%);
@@ -114,14 +116,27 @@
         }
 
         function alertWinner(indicatedSegment) {
-            const winner = indicatedSegment.text;
-            const gameID = currentData[winner] || "Pas d'ID";
-            document.getElementById('game-id').innerText = `🎉 GG ${winner} ! ID de game : ${gameID}`;
-            delete currentData[winner];
-            setTimeout(() => {
-                rebuildWheelAfterWinner();
-            }, 1000);
-        }
+    const winner = indicatedSegment.text;
+    const gameID = currentData[winner] || "Pas d'ID";
+    document.getElementById('game-id').innerText = `🎉 GG ${winner} ! ID de game : ${gameID}`;
+
+    // 💥 Effet confettis
+    confetti({
+        particleCount: 150,
+        spread: 90,
+        origin: { y: 0.6 }
+    });
+
+    // 🔊 Son de victoire
+    const audio = new Audio("https://cdn.pixabay.com/audio/2022/11/16/audio_06c1a8d1f2.mp3");
+    audio.play();
+
+    // 🧼 Supprimer le gagnant et relancer la roue
+    delete currentData[winner];
+    setTimeout(() => {
+        rebuildWheelAfterWinner();
+    }, 1000);
+}
 
         function spinWheel() {
             if (wheel) {
@@ -130,9 +145,12 @@
         }
 
         function resetWheel() {
-            document.getElementById('game-id').innerText = '';
-            fetchParticipants();
-        }
+    document.getElementById('game-id').innerText = '';
+    currentData = {}; // Vide la liste actuelle
+    lastParticipantsKey = ""; // Force le prochain fetch à mettre à jour
+    rebuildWheelAfterWinner(); // Réinitialise visuellement la roue
+    fetchParticipants(); // Recharge les participants depuis le backend
+}
     </script>
 </body>
 </html>
