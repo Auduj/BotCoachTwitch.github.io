@@ -144,12 +144,18 @@
             }
         }
 
-        function resetWheel() {
+        async function resetWheel() {
     document.getElementById('game-id').innerText = '';
-    currentData = {}; // Vide la liste actuelle
-    lastParticipantsKey = ""; // Force le prochain fetch à mettre à jour
-    rebuildWheelAfterWinner(); // Réinitialise visuellement la roue
-    fetchParticipants(); // Recharge les participants depuis le backend
+    currentData = {};
+    lastParticipantsKey = "";
+
+    // Appel API pour vider le backend
+    await fetch("https://botcoachbackend.onrender.com/participants", {
+        method: 'DELETE'
+    });
+
+    rebuildWheelAfterWinner();
+    fetchParticipants();
 }
     </script>
 </body>
