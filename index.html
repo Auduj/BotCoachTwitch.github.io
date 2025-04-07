@@ -72,8 +72,6 @@
         let wheel;
         let currentData = {};
         let lastParticipantsKey = "";
-        const victoryAudio = new Audio("https://cdn.pixabay.com/audio/2022/11/16/audio_06c1a8d1f2.mp3");
-
 
         async function fetchParticipants() {
             const res = await fetch("https://botcoachbackend.onrender.com/participants");
@@ -119,20 +117,21 @@
 
 
         function spinWheel() {
-            if (wheel) {
-                // Prépare le son au clic (ça débloque le autoplay sur navigateur)
-                victoryAudio.play().catch(() => {
-                    console.log("🔇 Audio autoplay bloqué, OK au prochain trigger");
-                });
+            const victory = document.getElementById('victory-audio');
+            victory.play().then(() => {
+                victory.pause();
+                victory.currentTime = 0;
+            }).catch(err => {
+                console.log("🔇 Audio autoplay bloqué (normal avant clic utilisateur)");
+            });
 
-                victoryAudio.pause();
-                victoryAudio.currentTime = 0;
-
+        if (wheel) {
                 wheel.startAnimation();
             }
         }
 
-        
+
+
         function alertWinner(indicatedSegment) {
     const winner = indicatedSegment.text;
     const gameID = currentData[winner] || "Pas d'ID";
@@ -146,7 +145,7 @@
     });
 
     // 🔊 Son épique
-    victoryAudio.play();
+    document.getElementById('victory-audio').play();
 
     // Supprime le gagnant et reconstruit
     delete currentData[winner];
@@ -170,5 +169,8 @@
     await fetchParticipants();
 }
     </script>
+<audio id="victory-audio" preload="auto">
+    <source src="https://cdn.pixabay.com/audio/2022/11/16/audio_06c1a8d1f2.mp3" type="audio/mpeg">
+</audio>
 </body>
 </html>
