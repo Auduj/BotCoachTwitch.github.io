@@ -1,32 +1,77 @@
 from twitchio.ext import commands
-from flask import Flask, jsonify, render_template
-from token_manager import get_valid_token
+from flask import Flask, jsonify
+import requests
 import threading
+import json
+import time
 
-# Remplace ces valeurs par les tiennes
-TOKEN = get_valid_token()
-NICK = 'auduj08'
-CHANNEL = 'Yendo_Jr'
-
-# --- Flask ---
+# --- Flask Setup ---
 app = Flask(__name__)
 participants = {}
 
 @app.route('/')
-def index():
-    return ('index.html')
+def home():
+    return jsonify({"status": "BotCoachTwitch API is running"})
 
 @app.route('/participants')
 def get_participants():
     return jsonify(participants)
 
+# --- Token Manager ---
+CONFIG_FILE = "config.json"
+TOKEN_URL = "https://id.twitch.tv/oauth2/token"
+CLIENT_ID = "kimne78kx3ncx6brgo4mv6wki5h1ko"  # Public client_id utilisé par TwitchTokenGenerator
+
+with open(CONFIG_FILE, "r") as f:
+    config = json.load(f)
+
+access_token = config["access_token"]
+refresh_token = config["refresh_token"]
+token_expiry = time.time() + 3600  # expiration approximative 1h
+
+def refresh_access_token():
+    global access_token, refresh_token, token_expiry
+    print("🔁 Rafraîchissement du token...")
+
+    params = {
+        "grant_type": "refresh_token",
+        "refresh_token": refresh_token,
+        "client_id": CLIENT_ID
+    }
+
+    response = requests.post(TOKEN_URL, params=params)
+    data = response.json()
+
+    if "access_token" in data:
+        access_token = f"oauth:{data['access_token']}"
+        refresh_token = data["refresh_token"]
+        token_expiry = time.time() + data["expires_in"]
+
+        config["access_token"] = access_token
+        config["refresh_token"] = refresh_token
+        with open(CONFIG_FILE, "w") as f:
+            json.dump(config, f, indent=4)
+
+        print("✅ Nouveau token enregistré.")
+    else:
+        print("❌ Erreur lors du rafraîchissement :", data)
+
+def get_valid_token():
+    if time.time() >= token_expiry:
+        refresh_access_token()
+    return access_token
+
 # --- Twitch Bot ---
 class Bot(commands.Bot):
     def __init__(self):
-        super().__init__(token=TOKEN, prefix='!', initial_channels=[CHANNEL])
+        super().__init__(
+            token=get_valid_token(),
+            prefix='!',
+            initial_channels=['nom_de_ta_chaine']  # <-- remplace par ton nom de chaîne
+        )
 
     async def event_ready(self):
-        print(f'✅ Bot connecté en tant que {self.nick}')
+        print(f"✅ Bot connecté en tant que {self.nick}")
 
     async def event_message(self, message):
         if message.echo:
@@ -40,17 +85,15 @@ class Bot(commands.Bot):
             game_id = parts[1]
             user = ctx.author.name
             participants[user] = game_id
-            await ctx.send(f"{user} a été ajouté à la liste avec l'ID de game {game_id} !")
+            await ctx.send(f"{user} a été ajouté avec l'ID de game : {game_id}")
         else:
-            await ctx.send("Utilisation : !coachme ID_GAME")
+            await ctx.send("❗ Utilisation correcte : !coachme ID_DE_GAME")
 
-# --- Thread Flask ---
-def run_flask():
+# --- Démarrage Flask + Bot ---
+def start_flask():
     app.run(host='0.0.0.0', port=5000)
 
-# --- Lancer ---
 if __name__ == '__main__':
-    flask_thread = threading.Thread(target=run_flask)
-    flask_thread.start()
-
+    threading.Thread(target=start_flask).start()
     bot = Bot()
+    bot.run()
