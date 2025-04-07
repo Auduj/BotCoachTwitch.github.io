@@ -2,39 +2,64 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Roue du coaching 🎡</title>
+    <title>Roue du coaching - Yendo_Jr ⚡</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/1.20.3/TweenMax.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/zarocknz/javascript-winwheel@master/Winwheel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
     <style>
-        canvas {
-            display: block;
-            margin: 0 auto;
-        }
         body {
-            background: #111;
+            background: radial-gradient(ellipse at center, #1a1a2e 0%, #0f0f1a 100%);
             color: #fff;
             text-align: center;
-            font-family: sans-serif;
+            font-family: 'Bangers', cursive;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            font-size: 48px;
+            margin-top: 30px;
+            text-shadow: 2px 2px 8px #ff0059;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); color: #ff0059; }
+            50% { transform: scale(1.05); color: #00d4ff; }
+        }
+        canvas {
+            display: block;
+            margin: 30px auto;
+            box-shadow: 0 0 25px #00ffea;
+            border-radius: 12px;
         }
         button {
             margin: 10px;
-            padding: 10px 20px;
-            font-size: 20px;
+            padding: 12px 30px;
+            font-size: 22px;
             cursor: pointer;
-            border-radius: 10px;
-            background-color: #28a745;
-            color: white;
+            border-radius: 12px;
             border: none;
+            background: linear-gradient(45deg, #ff0059, #00d4ff);
+            color: white;
+            font-family: 'Bangers', cursive;
+            letter-spacing: 1px;
+            box-shadow: 0 0 10px #ff0059;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px #00d4ff;
         }
         #game-id {
             margin-top: 20px;
-            font-size: 24px;
+            font-size: 28px;
             font-weight: bold;
+            color: #00ffe7;
+            text-shadow: 1px 1px 5px #ff0059;
         }
     </style>
 </head>
 <body>
-    <h1>🎡 Roue du coaching</h1>
+    <h1>🎮 Roue du coaching – Yendo_Jr ⚡</h1>
     <canvas id="canvas" width="500" height="500"></canvas>
     <br>
     <button onclick="spinWheel()">Lancer la roue</button>
@@ -49,7 +74,6 @@
         async function fetchParticipants() {
             const res = await fetch("https://botcoachbackend.onrender.com/participants");
             const data = await res.json();
-
             const newKey = JSON.stringify(Object.keys(data).sort());
             if (newKey === lastParticipantsKey) return;
 
@@ -61,7 +85,7 @@
         }
 
         setInterval(fetchParticipants, 5000);
-        fetchParticipants(); // Chargement initial
+        fetchParticipants();
 
         function buildWheel() {
             const names = Object.keys(currentData);
@@ -94,7 +118,6 @@
             const gameID = currentData[winner] || "Pas d'ID";
             document.getElementById('game-id').innerText = `🎉 GG ${winner} ! ID de game : ${gameID}`;
             delete currentData[winner];
-
             setTimeout(() => {
                 rebuildWheelAfterWinner();
             }, 1000);
