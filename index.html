@@ -12,13 +12,13 @@
         body {
             background: radial-gradient(ellipse at center, #1a1a2e 0%, #0f0f1a 100%);
             color: #fff;
-            text-align: center;
             font-family: 'Bangers', cursive;
             margin: 0;
             padding: 0;
         }
 
         h1 {
+            text-align: center;
             font-size: 48px;
             margin-top: 30px;
             text-shadow: 2px 2px 8px #ff0059;
@@ -30,10 +30,17 @@
             50% { transform: scale(1.05); color: #00d4ff; }
         }
 
+        .main-content {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 40px;
+            margin-top: 20px;
+        }
+
         .wheel-container {
             position: relative;
             width: 500px;
-            margin: 0 auto;
         }
 
         .pointer {
@@ -77,30 +84,74 @@
         }
 
         #game-id {
-            margin-top: 20px;
-            font-size: 28px;
+            margin-top: 10px;
+            font-size: 24px;
             font-weight: bold;
             color: #00ffe7;
             text-shadow: 1px 1px 5px #ff0059;
+        }
+
+        #counter {
+            margin-top: 10px;
+            font-size: 22px;
+            color: #FFD700;
+            text-shadow: 0 0 5px #ff0059;
+        }
+
+        #winners {
+            width: 200px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            box-shadow: 0 0 10px #00ffea;
+        }
+
+        #winners h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #00d4ff;
+        }
+
+        #winners ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            text-align: left;
+        }
+
+        #winners li {
+            font-size: 18px;
+            margin-bottom: 5px;
+            color: #fff;
         }
     </style>
 </head>
 <body>
     <h1>🎮 Roue du coaching – Yendo_Jr ⚡</h1>
 
-    <div class="wheel-container">
-        <div class="pointer"></div>
-        <canvas id="canvas" width="500" height="500"></canvas>
-    </div>
+    <div class="main-content">
+        <!-- Liste des gagnants -->
+        <div id="winners">
+            <h2>✅ Coachés</h2>
+            <ul id="winner-list"></ul>
+        </div>
 
-    <button onclick="spinWheel()">Lancer la roue</button>
-    <button onclick="resetWheel()">Reset la roue</button>
-    <div id="game-id"></div>
+        <!-- Roue -->
+        <div class="wheel-container">
+            <div class="pointer"></div>
+            <canvas id="canvas" width="500" height="500"></canvas>
+            <button onclick="spinWheel()">Lancer la roue</button>
+            <button onclick="resetWheel()">Reset la roue</button>
+            <div id="game-id"></div>
+            <div id="counter">🎯 Participants déjà coachés : <span id="count">0</span></div>
+        </div>
+    </div>
 
     <script>
         let wheel;
         let currentData = {};
         let lastParticipantsKey = "";
+        const winnerList = [];
 
         async function fetchParticipants() {
             const res = await fetch("https://botcoachbackend.onrender.com/participants");
@@ -185,16 +236,37 @@
 
             document.getElementById('victory-audio').play();
 
+            // Ajoute le gagnant à la liste visuelle
+            winnerList.push(winner);
+            updateWinnerList();
+
+            // Incrémente le compteur
+            let count = parseInt(document.getElementById('count').innerText);
+            document.getElementById('count').innerText = count + 1;
+
             delete currentData[winner];
             setTimeout(() => {
                 rebuildWheelAfterWinner();
             }, 1000);
         }
 
+        function updateWinnerList() {
+            const ul = document.getElementById('winner-list');
+            ul.innerHTML = "";
+            winnerList.forEach(name => {
+                const li = document.createElement('li');
+                li.textContent = `🦸 ${name}`;
+                ul.appendChild(li);
+            });
+        }
+
         async function resetWheel() {
             document.getElementById('game-id').innerText = '';
             currentData = {};
             lastParticipantsKey = "";
+            winnerList.length = 0;
+            updateWinnerList();
+            document.getElementById('count').innerText = '0';
 
             await fetch("https://botcoachbackend.onrender.com/participants", {
                 method: 'DELETE'
