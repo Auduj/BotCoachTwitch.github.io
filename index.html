@@ -10,18 +10,20 @@
 
     <style>
         body {
-            background: radial-gradient(ellipse at center, #1a1a2e 0%, #0f0f1a 100%);
-            color: #fff;
-            font-family: 'Bangers', cursive;
             margin: 0;
             padding: 0;
+            font-family: 'Bangers', cursive;
+            color: white;
+            overflow: hidden;
+            background: url('https://media.tenor.com/yheo1GGu3FwAAAAd/space.gif') no-repeat center center fixed;
+            background-size: cover;
         }
 
         h1 {
             text-align: center;
-            font-size: 48px;
+            font-size: 52px;
             margin-top: 30px;
-            text-shadow: 2px 2px 8px #ff0059;
+            text-shadow: 2px 2px 12px #ff0059;
             animation: pulse 2s infinite;
         }
 
@@ -41,6 +43,11 @@
         .wheel-container {
             position: relative;
             width: 500px;
+            transition: transform 0.5s ease-in-out;
+        }
+
+        .wheel-container.spinning {
+            transform: scale(1.1);
         }
 
         .pointer {
@@ -59,8 +66,9 @@
         canvas {
             display: block;
             margin: 30px auto 10px auto;
-            box-shadow: 0 0 25px #00ffea;
-            border-radius: 12px;
+            box-shadow: 0 0 35px #00ffea;
+            border: 6px dashed #ffd500;
+            border-radius: 50%;
         }
 
         button {
@@ -74,70 +82,47 @@
             color: white;
             font-family: 'Bangers', cursive;
             letter-spacing: 1px;
-            box-shadow: 0 0 10px #ff0059;
+            box-shadow: 0 0 12px #ff0059;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
         button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 20px #00d4ff;
+            transform: scale(1.08);
+            box-shadow: 0 0 24px #00d4ff;
         }
 
         #game-id {
             margin-top: 10px;
-            font-size: 24px;
+            font-size: 26px;
             font-weight: bold;
             color: #00ffe7;
-            text-shadow: 1px 1px 5px #ff0059;
+            text-shadow: 1px 1px 6px #ff0059;
+            animation: glow 1s infinite alternate;
         }
 
-        #counter {
-            margin-top: 10px;
-            font-size: 22px;
-            color: #FFD700;
-            text-shadow: 0 0 5px #ff0059;
+        @keyframes glow {
+            from { text-shadow: 0 0 5px #ff0059; }
+            to { text-shadow: 0 0 20px #ff0059, 0 0 30px #00d4ff; }
         }
 
-        #winners {
-            width: 200px;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            box-shadow: 0 0 10px #00ffea;
-        }
-
-        #winners h2 {
-            font-size: 24px;
-            margin-bottom: 10px;
-            color: #00d4ff;
-        }
-
-        #winners ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            text-align: left;
-        }
-
-        #winners li {
-            font-size: 18px;
-            margin-bottom: 5px;
-            color: #fff;
+        #counter, #winners {
+            margin-top: 20px;
+            background: rgba(0,0,0,0.4);
+            padding: 10px;
+            border-radius: 12px;
+            box-shadow: 0 0 15px #00ffea;
         }
     </style>
 </head>
 <body>
     <h1>🎮 Roue du coaching – Yendo_Jr ⚡</h1>
-
     <div class="main-content">
-        <!-- Liste des gagnants -->
         <div id="winners">
             <h2>✅ Coachés</h2>
             <ul id="winner-list"></ul>
         </div>
 
-        <!-- Roue -->
-        <div class="wheel-container">
+        <div class="wheel-container" id="wheel-container">
             <div class="pointer"></div>
             <canvas id="canvas" width="500" height="500"></canvas>
             <button onclick="spinWheel()">Lancer la roue</button>
@@ -146,135 +131,6 @@
             <div id="counter">🎯 Participants déjà coachés : <span id="count">0</span></div>
         </div>
     </div>
-
-    <script>
-        let wheel;
-        let currentData = {};
-        let lastParticipantsKey = "";
-        const winnerList = [];
-
-        async function fetchParticipants() {
-            const res = await fetch("https://botcoachbackend.onrender.com/participants");
-            const data = await res.json();
-            const newKey = JSON.stringify(Object.keys(data).sort());
-            if (newKey === lastParticipantsKey) return;
-
-            lastParticipantsKey = newKey;
-            currentData = data;
-
-            console.log("🎯 Participants mis à jour :", data);
-            rebuildWheelAfterWinner();
-        }
-
-        setInterval(fetchParticipants, 5000);
-        fetchParticipants();
-
-        function buildWheel() {
-            const names = Object.keys(currentData);
-            if (!names.length) names.push("Personne 😢");
-
-            const segmentColors = [
-                "#ff0059", "#00d4ff", "#ffd500", "#7eff00", "#00ffea", "#ff8700", "#aa00ff"
-            ];
-
-            wheel = new Winwheel({
-                canvasId: 'canvas',
-                numSegments: names.length,
-                outerRadius: 220,
-                textFontSize: 18,
-                textOrientation: 'horizontal',
-                textAlignment: 'outer',
-                segments: names.map((name, i) => ({
-                    text: name,
-                    fillStyle: segmentColors[i % segmentColors.length],
-                    textFillStyle: '#ffffff'
-                })),
-                animation: {
-                    type: 'spinToStop',
-                    duration: 6,
-                    spins: 10,
-                    easing: 'Power3.easeOut',
-                    callbackFinished: alertWinner
-                },
-                lineWidth: 5,
-                strokeStyle: "#111",
-                innerRadius: 20
-            });
-        }
-
-        function rebuildWheelAfterWinner() {
-            const canvas = document.getElementById('canvas');
-            const context = canvas.getContext('2d');
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            buildWheel();
-        }
-
-        function spinWheel() {
-            const victory = document.getElementById('victory-audio');
-            victory.play().then(() => {
-                victory.pause();
-                victory.currentTime = 0;
-            }).catch(err => {
-                console.log("🔇 Audio autoplay bloqué (normal avant clic utilisateur)");
-            });
-
-            if (wheel) {
-                wheel.startAnimation();
-            }
-        }
-
-        function alertWinner(indicatedSegment) {
-            const winner = indicatedSegment.text;
-            const gameID = currentData[winner] || "Pas d'ID";
-            document.getElementById('game-id').innerText = `🎉 GG ${winner} ! ID de game : ${gameID}`;
-
-            confetti({
-                particleCount: 150,
-                spread: 90,
-                origin: { y: 0.6 }
-            });
-
-            document.getElementById('victory-audio').play();
-
-            // Ajoute le gagnant à la liste visuelle
-            winnerList.push(winner);
-            updateWinnerList();
-
-            // Incrémente le compteur
-            let count = parseInt(document.getElementById('count').innerText);
-            document.getElementById('count').innerText = count + 1;
-
-            delete currentData[winner];
-            setTimeout(() => {
-                rebuildWheelAfterWinner();
-            }, 1000);
-        }
-
-        function updateWinnerList() {
-            const ul = document.getElementById('winner-list');
-            ul.innerHTML = "";
-            winnerList.forEach(name => {
-                const li = document.createElement('li');
-                li.textContent = `🦸 ${name}`;
-                ul.appendChild(li);
-            });
-        }
-
-        async function resetWheel() {
-            document.getElementById('game-id').innerText = '';
-            currentData = {};
-            lastParticipantsKey = "";
-            winnerList.length = 0;
-            updateWinnerList();
-            document.getElementById('count').innerText = '0';
-
-            await fetch("https://botcoachbackend.onrender.com/participants", {
-                method: 'DELETE'
-            });
-
-            await fetchParticipants();
-        }
-    </script>
 
     <audio id="victory-audio" preload="auto">
         <source src="sounds/victory.mp3" type="audio/mpeg">
