@@ -20,7 +20,7 @@ def get_participants():
 # --- Token Manager ---
 CONFIG_FILE = "config.json"
 TOKEN_URL = "https://id.twitch.tv/oauth2/token"
-CLIENT_ID = "kimne78kx3ncx6brgo4mv6wki5h1ko"  # Public client_id utilisé par TwitchTokenGenerator
+CLIENT_ID = "gp762nuuoqcoxypju8c569th9wz7q5"  # Public client_id utilisé par TwitchTokenGenerator
 
 with open(CONFIG_FILE, "r") as f:
     config = json.load(f)
@@ -67,7 +67,7 @@ class Bot(commands.Bot):
         super().__init__(
             token=get_valid_token(),
             prefix='!',
-            initial_channels=['nom_de_ta_chaine']  # <-- remplace par ton nom de chaîne
+            initial_channels=['Yendo_Jr']  # <-- remplace par ton nom de chaîne
         )
 
     async def event_ready(self):
