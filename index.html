@@ -72,6 +72,8 @@
         let wheel;
         let currentData = {};
         let lastParticipantsKey = "";
+        const victoryAudio = new Audio("https://cdn.pixabay.com/audio/2022/11/16/audio_06c1a8d1f2.mp3");
+
 
         async function fetchParticipants() {
             const res = await fetch("https://botcoachbackend.onrender.com/participants");
@@ -115,6 +117,20 @@
             buildWheel();
         }
 
+
+        function spinWheel() {
+            if (wheel) {
+                // Prépare le son au clic (ça débloque le autoplay sur navigateur)
+                victoryAudio.play().catch(() => {
+                    console.log("🔇 Audio autoplay bloqué, OK au prochain trigger");
+                });
+
+                victoryAudio.pause();
+                victoryAudio.currentTime = 0;
+
+                wheel.startAnimation();
+            }
+        }
         function alertWinner(indicatedSegment) {
     const winner = indicatedSegment.text;
     const gameID = currentData[winner] || "Pas d'ID";
@@ -137,12 +153,6 @@
         rebuildWheelAfterWinner();
     }, 1000);
 }
-
-        function spinWheel() {
-            if (wheel) {
-                wheel.startAnimation();
-            }
-        }
 
         async function resetWheel() {
     document.getElementById('game-id').innerText = '';
