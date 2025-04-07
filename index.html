@@ -131,28 +131,30 @@
                 wheel.startAnimation();
             }
         }
+
+        
         function alertWinner(indicatedSegment) {
     const winner = indicatedSegment.text;
     const gameID = currentData[winner] || "Pas d'ID";
     document.getElementById('game-id').innerText = `🎉 GG ${winner} ! ID de game : ${gameID}`;
 
-    // 💥 Effet confettis
+    // 🎉 Confettis
     confetti({
         particleCount: 150,
         spread: 90,
         origin: { y: 0.6 }
     });
 
-    // 🔊 Son de victoire
-    const audio = new Audio("https://cdn.pixabay.com/audio/2022/11/16/audio_06c1a8d1f2.mp3");
-    audio.play();
+    // 🔊 Son épique
+    victoryAudio.play();
 
-    // 🧼 Supprimer le gagnant et relancer la roue
+    // Supprime le gagnant et reconstruit
     delete currentData[winner];
     setTimeout(() => {
         rebuildWheelAfterWinner();
     }, 1000);
 }
+
 
         async function resetWheel() {
     document.getElementById('game-id').innerText = '';
