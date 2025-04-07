@@ -44,27 +44,28 @@
     <script>
         let wheel;
         let currentData = {};
+        let lastParticipantsKey = "";
 
         async function fetchParticipants() {
             const res = await fetch("https://botcoachbackend.onrender.com/participants");
             const data = await res.json();
 
-            console.log("Participants à jour :", data);
-            currentData = data;
-            buildWheel(); // ou updateWheel()
-        }
-        
-        // ⏱️ Rafraîchir toutes les 5 secondes
-        setInterval(fetchParticipants, 5000);
+            const newKey = JSON.stringify(Object.keys(data).sort());
+            if (newKey === lastParticipantsKey) return;
 
-        // ⏱️ Et lancer une première fois au chargement
-        fetchParticipants();
+            lastParticipantsKey = newKey;
+            currentData = data;
+
+            console.log("🎯 Participants mis à jour :", data);
+            rebuildWheelAfterWinner();
+        }
+
+        setInterval(fetchParticipants, 5000);
+        fetchParticipants(); // Chargement initial
+
         function buildWheel() {
             const names = Object.keys(currentData);
-
-            if (!names.length) {
-                names.push("Personne 😢");
-            }
+            if (!names.length) names.push("Personne 😢");
 
             wheel = new Winwheel({
                 canvasId: 'canvas',
@@ -81,27 +82,22 @@
             });
         }
 
-        function alertWinner(indicatedSegment) {
-            const winner = indicatedSegment.text;
-            const gameID = currentData[winner] || "Pas d'ID";
-
-            // Affiche le gagnant
-            document.getElementById('game-id').innerText = `🎉 GG ${winner} ! ID de game : ${gameID}`;
-
-            // Retire le gagnant
-            delete currentData[winner];
-
-            // Reconstruit la roue avec les participants restants
-            setTimeout(() => {
-                rebuildWheelAfterWinner();
-            }, 1000);
-        }
-
         function rebuildWheelAfterWinner() {
             const canvas = document.getElementById('canvas');
             const context = canvas.getContext('2d');
             context.clearRect(0, 0, canvas.width, canvas.height);
             buildWheel();
+        }
+
+        function alertWinner(indicatedSegment) {
+            const winner = indicatedSegment.text;
+            const gameID = currentData[winner] || "Pas d'ID";
+            document.getElementById('game-id').innerText = `🎉 GG ${winner} ! ID de game : ${gameID}`;
+            delete currentData[winner];
+
+            setTimeout(() => {
+                rebuildWheelAfterWinner();
+            }, 1000);
         }
 
         function spinWheel() {
@@ -114,9 +110,6 @@
             document.getElementById('game-id').innerText = '';
             fetchParticipants();
         }
-
-        // Charge initial
-        fetch("https://botcoachbackend.onrender.com/participants")
     </script>
 </body>
 </html>
