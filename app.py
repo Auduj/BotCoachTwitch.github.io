@@ -1,9 +1,19 @@
 from twitchio.ext import commands
 from flask import Flask, jsonify
+from dotenv import load_dotenv
 import requests
 import threading
-import json
 import time
+import os
+
+# --- Charger les variables d'environnement ---
+load_dotenv()
+
+ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
+REFRESH_TOKEN = os.getenv("REFRESH_TOKEN")
+CLIENT_ID = os.getenv("CLIENT_ID")
+CHANNEL = os.getenv("CHANNEL")
+TOKEN_URL = "https://id.twitch.tv/oauth2/token"
 
 # --- Flask Setup ---
 app = Flask(__name__)
@@ -18,24 +28,15 @@ def get_participants():
     return jsonify(participants)
 
 # --- Token Manager ---
-CONFIG_FILE = "config.json"
-TOKEN_URL = "https://id.twitch.tv/oauth2/token"
-CLIENT_ID = "gp762nuuoqcoxypju8c569th9wz7q5"  # Public client_id utilisé par TwitchTokenGenerator
-
-with open(CONFIG_FILE, "r") as f:
-    config = json.load(f)
-
-access_token = config["access_token"]
-refresh_token = config["refresh_token"]
-token_expiry = time.time() + 3600  # expiration approximative 1h
+token_expiry = time.time() + 3600  # expiration approximative de 1h
 
 def refresh_access_token():
-    global access_token, refresh_token, token_expiry
+    global ACCESS_TOKEN, REFRESH_TOKEN, token_expiry
     print("🔁 Rafraîchissement du token...")
 
     params = {
         "grant_type": "refresh_token",
-        "refresh_token": refresh_token,
+        "refresh_token": REFRESH_TOKEN,
         "client_id": CLIENT_ID
     }
 
@@ -43,23 +44,18 @@ def refresh_access_token():
     data = response.json()
 
     if "access_token" in data:
-        access_token = f"oauth:{data['access_token']}"
-        refresh_token = data["refresh_token"]
+        ACCESS_TOKEN = f"oauth:{data['access_token']}"
+        REFRESH_TOKEN = data["refresh_token"]
         token_expiry = time.time() + data["expires_in"]
 
-        config["access_token"] = access_token
-        config["refresh_token"] = refresh_token
-        with open(CONFIG_FILE, "w") as f:
-            json.dump(config, f, indent=4)
-
-        print("✅ Nouveau token enregistré.")
+        print("✅ Nouveau token rafraîchi.")
     else:
         print("❌ Erreur lors du rafraîchissement :", data)
 
 def get_valid_token():
     if time.time() >= token_expiry:
         refresh_access_token()
-    return access_token
+    return ACCESS_TOKEN
 
 # --- Twitch Bot ---
 class Bot(commands.Bot):
@@ -67,7 +63,7 @@ class Bot(commands.Bot):
         super().__init__(
             token=get_valid_token(),
             prefix='!',
-            initial_channels=['Yendo_Jr']  # <-- remplace par ton nom de chaîne
+            initial_channels=[CHANNEL]
         )
 
     async def event_ready(self):
