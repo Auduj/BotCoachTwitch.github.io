@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Roue du coaching 🎡</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/1.20.3/TweenMax.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/zarocknz/javascript-winwheel@master/Winwheel.min.js"></script>
+    <style>
+        canvas {
+            display: block;
+            margin: 0 auto;
+        }
+        body {
+            background: #111;
+            color: #fff;
+            text-align: center;
+            font-family: sans-serif;
+        }
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 20px;
+            cursor: pointer;
+            border-radius: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+        }
+        #game-id {
+            margin-top: 20px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎡 Roue du coaching</h1>
+    <canvas id="canvas" width="500" height="500"></canvas>
+    <br>
+    <button onclick="spinWheel()">Lancer la roue</button>
+    <button onclick="resetWheel()">Reset la roue</button>
+    <div id="game-id"></div>
+
+    <script>
+        let wheel;
+        let currentData = {};
+
+        async function fetchParticipants() {
+            const res = await fetch('/participants');
+            currentData = await res.json();
+            buildWheel();
+        }
+
+        function buildWheel() {
+            const names = Object.keys(currentData);
+
+            if (!names.length) {
+                names.push("Personne 😢");
+            }
+
+            wheel = new Winwheel({
+                canvasId: 'canvas',
+                numSegments: names.length,
+                outerRadius: 200,
+                textFontSize: 16,
+                segments: names.map(name => ({ text: name })),
+                animation: {
+                    type: 'spinToStop',
+                    duration: 5,
+                    spins: 8,
+                    callbackFinished: alertWinner
+                }
+            });
+        }
+
+        function alertWinner(indicatedSegment) {
+            const winner = indicatedSegment.text;
+            const gameID = currentData[winner] || "Pas d'ID";
+
+            // Affiche le gagnant
+            document.getElementById('game-id').innerText = `🎉 GG ${winner} ! ID de game : ${gameID}`;
+
+            // Retire le gagnant
+            delete currentData[winner];
+
+            // Reconstruit la roue avec les participants restants
+            setTimeout(() => {
+                rebuildWheelAfterWinner();
+            }, 1000);
+        }
+
+        function rebuildWheelAfterWinner() {
+            const canvas = document.getElementById('canvas');
+            const context = canvas.getContext('2d');
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            buildWheel();
+        }
+
+        function spinWheel() {
+            if (wheel) {
+                wheel.startAnimation();
+            }
+        }
+
+        function resetWheel() {
+            document.getElementById('game-id').innerText = '';
+            fetchParticipants();
+        }
+
+        // Charge initial
+        fetchParticipants();
+    </script>
+</body>
+</html>
