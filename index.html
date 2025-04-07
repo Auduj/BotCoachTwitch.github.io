@@ -149,13 +149,13 @@
     currentData = {};
     lastParticipantsKey = "";
 
-    // Appel API pour vider le backend
+    // ⚠️ Attend la réponse de l'API avant de rebuild
     await fetch("https://botcoachbackend.onrender.com/participants", {
         method: 'DELETE'
     });
 
-    rebuildWheelAfterWinner();
-    fetchParticipants();
+    // Recharge les participants depuis le backend (à jour)
+    await fetchParticipants();
 }
     </script>
 </body>
