@@ -98,7 +98,7 @@
             text-shadow: 0 0 5px #ff0059;
         }
 
-        #winners {
+        #winners, #active-users {
             width: 200px;
             padding: 15px;
             background: rgba(255, 255, 255, 0.05);
@@ -106,22 +106,33 @@
             box-shadow: 0 0 10px #00ffea;
         }
 
-        #winners h2 {
+        #winners h2, #active-users h2 {
             font-size: 24px;
             margin-bottom: 10px;
             color: #00d4ff;
         }
 
-        #winners ul {
+        #winners ul, #participant-list {
             list-style: none;
             padding: 0;
             margin: 0;
             text-align: left;
         }
 
-        #winners li {
+        #winners li, #participant-list li {
             font-size: 18px;
             margin-bottom: 5px;
+            color: #fff;
+        }
+
+        #participant-list button {
+            margin-left: 10px;
+            font-size: 14px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: #ff0059;
+            border: none;
+            cursor: pointer;
             color: #fff;
         }
     </style>
@@ -130,13 +141,16 @@
     <h1>🎮 Roue du coaching – Yendo_Jr ⚡</h1>
 
     <div class="main-content">
-        <!-- Liste des gagnants -->
         <div id="winners">
             <h2>✅ Coachés</h2>
             <ul id="winner-list"></ul>
         </div>
 
-        <!-- Roue -->
+        <div id="active-users">
+            <h2>🎯 Participants actifs</h2>
+            <ul id="participant-list"></ul>
+        </div>
+
         <div class="wheel-container">
             <div class="pointer"></div>
             <canvas id="canvas" width="500" height="500"></canvas>
@@ -164,18 +178,39 @@
 
             console.log("🎯 Participants mis à jour :", data);
             rebuildWheelAfterWinner();
+            updateParticipantList();
         }
 
         setInterval(fetchParticipants, 1000);
         fetchParticipants();
 
+        function updateParticipantList() {
+            const ul = document.getElementById('participant-list');
+            ul.innerHTML = "";
+
+            Object.entries(currentData).forEach(([name, id]) => {
+                const li = document.createElement('li');
+                li.innerHTML = `👤 ${name} <button onclick="removeParticipant('${name}')">❌</button>`;
+                ul.appendChild(li);
+            });
+        }
+
+        async function removeParticipant(name) {
+            const confirmDelete = confirm(`Supprimer ${name} de la roue ?`);
+            if (!confirmDelete) return;
+
+            await fetch(`https://botcoachbackend.onrender.com/participants/${name}`, {
+                method: 'DELETE'
+            });
+
+            await fetchParticipants();
+        }
+
         function buildWheel() {
             const names = Object.keys(currentData);
             if (!names.length) names.push("Personne 😢");
 
-            const segmentColors = [
-                "#ff0059", "#00d4ff", "#ffd500", "#7eff00", "#00ffea", "#ff8700", "#aa00ff"
-            ];
+            const segmentColors = ["#ff0059", "#00d4ff", "#ffd500", "#7eff00", "#00ffea", "#ff8700", "#aa00ff"];
 
             wheel = new Winwheel({
                 canvasId: 'canvas',
@@ -218,9 +253,7 @@
                 console.log("🔇 Audio autoplay bloqué (normal avant clic utilisateur)");
             });
 
-            if (wheel) {
-                wheel.startAnimation();
-            }
+            if (wheel) wheel.startAnimation();
         }
 
         function alertWinner(indicatedSegment) {
@@ -236,18 +269,14 @@
 
             document.getElementById('victory-audio').play();
 
-            // Ajoute le gagnant à la liste visuelle
             winnerList.push(winner);
             updateWinnerList();
 
-            // Incrémente le compteur
             let count = parseInt(document.getElementById('count').innerText);
             document.getElementById('count').innerText = count + 1;
 
             delete currentData[winner];
-            setTimeout(() => {
-                rebuildWheelAfterWinner();
-            }, 1000);
+            setTimeout(() => rebuildWheelAfterWinner(), 1000);
         }
 
         function updateWinnerList() {
