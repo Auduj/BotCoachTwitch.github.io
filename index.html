@@ -240,8 +240,6 @@
       .wheel-section { order: 2; max-width: 90%; }
       .wheel-container { width: 300px; height: 300px; }
       #center-logo { width: 60px; height: 60px; }
-      .pointer { top: -5px; border-left-width: 15px; border-right-width: 15px; border-bottom-width: 25px; }
-      .pointer::before { top: -33px; }
       #iron-man-presenter { height: 250px; right: 5px; }
       .animated-light { display: none; }
     }
@@ -273,7 +271,6 @@
   <div class="main-content">
     <div class="wheel-section">
       <div class="wheel-container">
-        <div class="pointer"></div>
         <canvas id="canvas" width="500" height="500"></canvas>
         <div id="center-logo">
             <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -425,17 +422,9 @@
         wheel = null;
       }
       if (!hasParticipants) {
-        context.save();
-        context.fillStyle = 'rgba(0,0,0,0.6)';
-        context.fillRect(0, 0, canvasElement.width, canvasElement.height);
-        context.font = "bold 24px 'Luckiest Guy', cursive";
-        context.fillStyle = 'white';
-        context.textAlign = 'center';
-        context.textBaseline = 'middle';
-        context.fillText("Ajoutez des participants !", canvasElement.width / 2, canvasElement.height / 2);
-        context.restore();
-        spinButton.disabled = true;
-        return;
+    // Désactive le bouton spin s'il n'y a pas de participants
+    spinButton.disabled = true;
+    return;
       } else { spinButton.disabled = false; }
       const segmentColors = [
         '#E62429', '#0A7FDE', '#F5C132', '#2E8A5D', '#C0C0C0',
