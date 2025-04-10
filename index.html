@@ -24,6 +24,8 @@
         }
 
         body {
+            /* NOTE: L'URL de fond externe peut causer des erreurs "Access Denied". */
+            /* Remplacez par une URL valide ou une image hébergée localement si nécessaire. */
             background: url('https://cdna.artstation.com/p/assets/images/images/028/044/288/large/joshua-cairos-joshua-cairos-avengers-tower-interior-concept-art-01.jpg?1593317715') no-repeat center center fixed;
             background-size: cover;
             color: var(--text);
@@ -358,6 +360,8 @@
             z-index: 4;
             pointer-events: none;
             transition: transform 0.3s ease-out;
+            /* NOTE: L'URL externe peut causer des erreurs "Access Denied". */
+            /* Remplacez par une URL valide ou une image hébergée localement si nécessaire. */
         }
 
         #iron-man-presenter.launching {
@@ -416,18 +420,18 @@
             .pointer { top: -5px; border-left-width: 15px; border-right-width: 15px; border-bottom-width: 25px; }
             .pointer::before { top: -33px; }
             #iron-man-presenter { height: 250px; right: 5px; }
-            #repulsor-ray { /* Ajuster position/taille pour mobile */
+            #repulsor-ray {
                 bottom: 80px;
                 right: 100px;
                 height: 100px;
                 transform: rotate(-55deg) scaleY(0);
             }
-             @keyframes repulsorShoot { /* Ajuster la rotation mobile */
+             @keyframes repulsorShoot {
                 0% { opacity: 0.5; transform: rotate(-55deg) scaleY(0); }
                 50% { opacity: 1; transform: rotate(-55deg) scaleY(1.5); }
                 100% { opacity: 0; transform: rotate(-55deg) scaleY(1.5); }
             }
-            .animated-light { display: none; } /* Cacher les lumières sur mobile */
+            .animated-light { display: none; }
         }
         @media (max-width: 480px) {
              h1 { font-size: 2.5rem; }
@@ -496,7 +500,7 @@
 
     </div>
 
-    <img id="iron-man-presenter" src="https://www.pngkey.com/png/full/10-103807_iron-man-png-transparent-images-iron-man-mark.png" alt="[Image of Iron Man, le présentateur]">
+    <img id="iron-man-presenter" src="https://www.pngkey.com/png/full/10-103807_iron-man-png-transparent-images-iron-man-mark.png" alt="Iron Man, le présentateur">
 
 
     <script>
@@ -515,7 +519,7 @@
         const context = canvasElement.getContext('2d');
         const victoryAudio = document.getElementById('victory-audio');
         const ironManElement = document.getElementById('iron-man-presenter');
-        const repulsorRayElement = document.getElementById('repulsor-ray'); // *** Référence au rayon ***
+        const repulsorRayElement = document.getElementById('repulsor-ray');
 
 
         async function fetchParticipants() { /* ... (inchangé) ... */
@@ -607,14 +611,14 @@
         }
 
         function buildWheel() { /* ... (inchangé) ... */
-            const names = Object.keys(currentData);
+             const names = Object.keys(currentData);
             const hasParticipants = names.length > 0;
 
             context.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
             if (wheel) {
                 try {
-                    if (wheel.isAnimating()) {
+                    if (wheel.isAnimating) { // *** CORRECTION ICI ***
                         wheel.stopAnimation(false);
                     }
                     wheel.destroy();
@@ -680,7 +684,8 @@
         }
 
         function spinWheel() {
-            if (!wheel || wheel.isAnimating() || !ironManElement || !repulsorRayElement) { // Vérifier éléments
+             // *** CORRECTION ICI: Utiliser wheel.isAnimating (propriété) ***
+            if (!wheel || wheel.isAnimating || !ironManElement || !repulsorRayElement) {
                 return;
             }
             spinButton.disabled = true;
@@ -694,7 +699,7 @@
                  ironManElement.classList.remove('launching');
              }, { once: true });
 
-            // *** Animer le rayon répulseur ***
+            // Animer le rayon répulseur
             repulsorRayElement.classList.add('shooting');
              repulsorRayElement.addEventListener('animationend', () => {
                  repulsorRayElement.classList.remove('shooting');
@@ -712,7 +717,7 @@
         }
 
         function alertWinner(indicatedSegment) { /* ... (inchangé) ... */
-            spinButton.disabled = false;
+             spinButton.disabled = false;
 
              if (!indicatedSegment || !indicatedSegment.text) {
                  gameIdDiv.innerText = `🤔 Oups, réessayez !`;
@@ -762,8 +767,9 @@
             });
         }
 
-        async function resetWheel() { /* ... (inchangé) ... */
-            if (wheel && wheel.isAnimating()) {
+        async function resetWheel() {
+             // *** CORRECTION ICI: Utiliser wheel.isAnimating (propriété) ***
+            if (wheel && wheel.isAnimating) {
                  alert("Attendez la fin de la rotation !");
                  return;
              }
@@ -787,7 +793,7 @@
                      console.error("Erreur reset:", response.statusText);
                      alert("Erreur lors de la réinitialisation côté serveur.");
                  }
-                buildWheel();
+                buildWheel(); // Reconstruire la roue vide
             } catch (error) {
                  console.error("Erreur lors de la réinitialisation:", error);
                  alert("Erreur réseau lors de la réinitialisation.");
@@ -797,14 +803,14 @@
         // --- Initialisation ---
         let fetchIntervalId = null;
         window.onload = function() { /* ... (inchangé) ... */
-             fetchParticipants();
+              fetchParticipants();
             updateWinnerList();
             if (fetchIntervalId) clearInterval(fetchIntervalId);
             fetchIntervalId = setInterval(fetchParticipants, 5000);
         };
 
         document.addEventListener("visibilitychange", function() { /* ... (inchangé) ... */
-            if (document.hidden) {
+             if (document.hidden) {
             if (fetchIntervalId) clearInterval(fetchIntervalId);
             fetchIntervalId = null;
           } else {
