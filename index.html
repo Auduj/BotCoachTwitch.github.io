@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>Roue du coaching - Yendo_Jr ⚡</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Librairies de TweenMax, Winwheel et confetti -->
+  <!-- Librairies JS pour les animations, la roue, et les confettis -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/1.20.3/TweenMax.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/zarocknz/javascript-winwheel@master/Winwheel.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -23,7 +23,7 @@
       --panel-border: var(--avengers-blue);
     }
 
-    /* Fond créé entièrement en code : gradient animé */
+    /* Fond animé par dégradé */
     body {
       background: linear-gradient(135deg, var(--avengers-blue), var(--avengers-red));
       background-size: 200% 200%;
@@ -39,7 +39,7 @@
       0%   { background-position: 0% 50%; }
       100% { background-position: 100% 50%; }
     }
-    /* Superposition d'un overlay semi-transparent */
+    /* Overlay semi-transparent */
     body::after {
       content: "";
       position: fixed;
@@ -51,7 +51,7 @@
       z-index: 0;
     }
 
-    /* --- Éléments animés pour le fond --- */
+    /* Éclairages animés en fond */
     .animated-light {
       position: fixed;
       border-radius: 50%;
@@ -117,38 +117,52 @@
       align-items: center;
       margin-bottom: 10px;
     }
-    .pointer {
-      width: 0; height: 0;
-      border-left: 25px solid transparent; border-right: 25px solid transparent;
-      border-bottom: 45px solid var(--avengers-red);
-      position: absolute; left: 50%; top: -15px;
-      transform: translateX(-50%); z-index: 10;
-      filter: drop-shadow(0px 3px 0px var(--outline));
-    }
-    .pointer::before {
-      content: ''; position: absolute; width: 0; height: 0;
-      border-left: 5px solid transparent; border-right: 5px solid transparent;
-      border-top: 8px solid var(--outline);
-      top: -43px; left: 50%; transform: translateX(-50%);
-    }
     canvas {
-      display: block; box-shadow: 0 0 15px 5px var(--avengers-blue);
-      border-radius: 50%; max-width: 100%; height: auto;
-      border: 5px solid var(--outline); position: absolute;
-      top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1;
+      display: block; 
+      box-shadow: 0 0 15px 5px var(--avengers-blue);
+      border-radius: 50%; 
+      max-width: 100%; 
+      height: auto;
+      border: 5px solid var(--outline); 
+      position: absolute;
+      top: 50%; left: 50%; 
+      transform: translate(-50%, -50%);
+      z-index: 1;
     }
+    /* Nouveau centre : le réacteur ARC */
     #center-logo {
-  width: 100px; /* ou 120px selon vos préférences */
-  height: 100px;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 5;
-  pointer-events: none;
-}
-
-    #center-logo svg { width: 100%; height: 100%; fill: var(--avengers-silver); filter: drop-shadow(2px 2px 0px var(--outline)); }
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100px;
+      height: 100px;
+      transform: translate(-50%, -50%);
+      z-index: 5;
+      pointer-events: none;
+    }
+    .arc-reactor {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: radial-gradient(circle, #00f, #000 70%);
+      animation: rotateReactor 4s linear infinite;
+    }
+    .arc-reactor::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 60%;
+      height: 60%;
+      background: #000;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
+    @keyframes rotateReactor {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
 
     .wheel-buttons { text-align: center; width: 100%; }
 
@@ -195,6 +209,7 @@
     }
     #participant-list li span { flex-grow: 1; margin-right: 10px; word-break: break-word; }
     #winners li:only-child, #participant-list li:only-child { text-align: center; font-style: italic; display: block; border-bottom: none; }
+
     #participant-list button {
       margin-left: 0; font-size: 0.8rem; padding: 2px 6px; border-radius: 6px;
       background: var(--avengers-red); border: 2px solid var(--outline); cursor: pointer;
@@ -203,30 +218,53 @@
     }
     #participant-list button:hover { transform: translate(1px, 1px); box-shadow: 1px 1px 0px var(--outline); }
 
-    /* --- Iron Man Présentateur créé par code en SVG --- */
-    /* Le SVG ci-dessous remplace l'image externe et est animé lors du lancement */
+    /* --- Nouveau module Iron Man (inspiré du CodePen) --- */
+    /* On retire l'ancien SVG et on place ici le nouveau module dans un conteneur à côté de la roue */
     #iron-man-presenter {
-      position: fixed;
-      bottom: 0;
-      right: 10px;
-      height: 350px;
-      width: auto;
+      position: absolute;
+      left: 520px; /* Place à droite de la roue (la roue fait 500px de largeur) */
+      top: calc(50% - 100px); /* Centré verticalement par rapport à la roue */
+      width: 200px;
+      height: 200px;
       z-index: 4;
       pointer-events: none;
     }
-    /* Animation pour simuler Iron Man lançant la roue */
-    @keyframes ironManLaunch {
-      0% { transform: translate(0, 0) rotate(0deg); }
-      20% { transform: translate(-20px, -20px) rotate(-10deg); }
-      50% { transform: translate(-40px, -40px) rotate(10deg); }
-      80% { transform: translate(-20px, -20px) rotate(-10deg); }
-      100% { transform: translate(0, 0) rotate(0deg); }
+    /* Exemple simplifié inspiré du CodePen de Chanson */
+    .iron-man {
+      width: 100%;
+      height: 100%;
+    }
+    .helmet {
+      background: var(--avengers-red);
+      border: 3px solid #000;
+      border-radius: 50% 50% 40% 40%;
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+    .eye {
+      background: #fff;
+      width: 30px;
+      height: 15px;
+      border-radius: 15px;
+      position: absolute;
+      top: 40%;
+    }
+    .eye-left { left: 25%; }
+    .eye-right { right: 25%; }
+    /* Animation pour simuler le geste de lancer */
+    @keyframes ironManPush {
+      0%   { transform: rotate(15deg) translate(0,0); }
+      20%  { transform: rotate(10deg) translate(20px, -15px); }
+      50%  { transform: rotate(0deg)   translate(40px, -20px); }
+      80%  { transform: rotate(10deg)  translate(20px, -15px); }
+      100% { transform: rotate(15deg)  translate(0,0); }
     }
     #iron-man-presenter.launching {
-      animation: ironManLaunch 1s ease-in-out forwards;
+      animation: ironManPush 1s ease-in-out forwards;
     }
 
-    /* --- Responsive --- */
+    /* --- Responsive adjustments --- */
     @media (min-width: 900px) {
       .main-content { align-items: center; padding-bottom: 0; }
       .lists-container { flex-direction: column; max-width: 300px; }
@@ -240,7 +278,8 @@
       .wheel-section { order: 2; max-width: 90%; }
       .wheel-container { width: 300px; height: 300px; }
       #center-logo { width: 60px; height: 60px; }
-      #iron-man-presenter { height: 250px; right: 5px; }
+      /* Pour Iron Man, on ajuste en mode mobile */
+      #iron-man-presenter { height: 250px; left: 5px; top: auto; bottom: 0; }
       .animated-light { display: none; }
     }
     @media (max-width: 480px) {
@@ -253,11 +292,12 @@
       #game-id, #counter { font-size: 1.2rem; }
       #winners li, #participant-list li { font-size: 0.9rem; }
       #participant-list button { font-size: 0.7rem; padding: 1px 4px; }
-      #iron-man-presenter { height: 180px; right: 0; opacity: 0.9; }
+      #iron-man-presenter { height: 180px; left: 0; opacity: 0.9; }
     }
   </style>
 </head>
 <body>
+  <!-- Éléments d'éclairage animés en fond -->
   <div class="animated-light" id="light1"></div>
   <div class="animated-light" id="light2"></div>
   <div class="animated-light" id="light3"></div>
@@ -269,19 +309,14 @@
   </h1>
 
   <div class="main-content">
+    <!-- Conteneur de la roue -->
     <div class="wheel-section">
       <div class="wheel-container">
         <canvas id="canvas" width="500" height="500"></canvas>
+        <!-- Centre remplacé par le réacteur ARC -->
         <div id="center-logo">
-            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-              <!-- Cercle rouge pour représenter le masque de Spiderman -->
-              <circle cx="50" cy="50" r="45" fill="#E60023" stroke="#000" stroke-width="3" />
-              <!-- Yeux blancs typiques du masque -->
-              <ellipse cx="35" cy="40" rx="8" ry="12" fill="#FFF" />
-              <ellipse cx="65" cy="40" rx="8" ry="12" fill="#FFF" />
-            </svg>
-          </div>
-          
+          <div class="arc-reactor"></div>
+        </div>
       </div>
       <div class="wheel-buttons">
         <button onclick="spinWheel()">Lancer la roue</button>
@@ -290,34 +325,34 @@
         <div id="counter">🎯 Participants déjà coachés : <span id="count">0</span></div>
       </div>
     </div>
+    <!-- Listes des participants -->
     <div class="lists-container">
       <div id="winners">
-        <h2><img src="https://img.icons8.com/fluency/48/checked-user-male.png" alt="Utilisateur coché" style="vertical-align: middle; height: 1em;"> Coachés</h2>
+        <h2>
+          <img src="https://img.icons8.com/fluency/48/checked-user-male.png" alt="Utilisateur coché" style="vertical-align: middle; height: 1em;"> 
+          Coachés
+        </h2>
         <ul id="winner-list"></ul>
       </div>
       <div id="active-users">
-        <h2><img src="https://img.icons8.com/fluency/48/group.png" alt="Groupe" style="vertical-align: middle; height: 1em;"> Participants actifs</h2>
+        <h2>
+          <img src="https://img.icons8.com/fluency/48/group.png" alt="Groupe" style="vertical-align: middle; height: 1em;"> 
+          Participants actifs
+        </h2>
         <ul id="participant-list"></ul>
       </div>
     </div>
   </div>
 
-  <!-- Iron Man "dessiné" en SVG et animé lors du lancement -->
-  <svg id="iron-man-presenter" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">
-    <defs>
-      <linearGradient id="helmetGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" style="stop-color:#E62429; stop-opacity:1" />
-        <stop offset="100%" style="stop-color:#FFD700; stop-opacity:1" />
-      </linearGradient>
-    </defs>
-    <!-- Une forme simplifiée pour représenter le casque d'Iron Man -->
-    <path d="M100,30 L140,70 L130,110 L70,110 L60,70 Z" fill="url(#helmetGradient)" stroke="#000" stroke-width="2"/>
-    <!-- Yeux stylisés -->
-    <rect x="75" y="60" width="15" height="5" fill="#FFF"/>
-    <rect x="110" y="60" width="15" height="5" fill="#FFF"/>
-    <!-- Optionnel: un élément central pour ajouter du caractère -->
-    <circle cx="100" cy="120" r="10" fill="#000"/>
-  </svg>
+  <!-- Nouveau module Iron Man (remplace l'ancien SVG), placé à côté de la roue -->
+  <div id="iron-man-presenter">
+    <div class="iron-man">
+      <div class="helmet">
+        <div class="eye eye-left"></div>
+        <div class="eye eye-right"></div>
+      </div>
+    </div>
+  </div>
 
   <script>
     // --- Variables Globales ---
@@ -327,7 +362,7 @@
     const winnerList = [];
     let fetchIntervalId = null;
 
-    // --- Références DOM ---
+    // Références DOM
     let participantListUL;
     let winnerListUL;
     let gameIdDiv;
@@ -422,9 +457,9 @@
         wheel = null;
       }
       if (!hasParticipants) {
-    // Désactive le bouton spin s'il n'y a pas de participants
-    spinButton.disabled = true;
-    return;
+        // Désactive le bouton spin s'il n'y a pas de participants
+        spinButton.disabled = true;
+        return;
       } else { spinButton.disabled = false; }
       const segmentColors = [
         '#E62429', '#0A7FDE', '#F5C132', '#2E8A5D', '#C0C0C0',
@@ -476,7 +511,7 @@
       spinButton.disabled = true;
       victoryAudio.pause();
       victoryAudio.currentTime = 0;
-      // Animation : appliquer la classe "launching" à l'élément SVG Iron Man
+      // Déclenche l'animation du module Iron Man
       ironManElement.classList.add('launching');
       setTimeout(() => { ironManElement.classList.remove('launching'); }, 1000);
       if (wheel) { wheel.startAnimation(); }
@@ -502,12 +537,22 @@
       }
       const gameID = currentData[fullWinnerName] || "Pas d'ID";
       gameIdDiv.innerText = `🏆 ${fullWinnerName} est coaché(e) ! (ID: ${gameID}) 🎉`;
+      
+      // Calculer la position centrale du canvas pour centrer les confettis
+      const boundingRect = canvasElement.getBoundingClientRect();
+      const centerX = (boundingRect.left + boundingRect.right) / 2;
+      const centerY = (boundingRect.top + boundingRect.bottom) / 2;
+      
       confetti({
         particleCount: 200,
         spread: 100,
-        origin: { y: 0.6 },
+        origin: {
+          x: centerX / window.innerWidth,
+          y: centerY / window.innerHeight
+        },
         colors: ['#E62429', '#0A7FDE', '#F5C132', '#FFFFFF', '#C0C0C0']
       });
+      
       victoryAudio.play().catch(e => console.error("Error playing audio:", e));
       winnerList.push(fullWinnerName);
       updateWinnerList();
