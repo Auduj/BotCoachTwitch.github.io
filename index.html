@@ -350,59 +350,6 @@
             box-shadow: 1px 1px 0px var(--outline);
         }
 
-        /* --- Iron Man Présentateur --- */
-        #iron-man-presenter {
-            position: fixed;
-            bottom: 0;
-            right: 10px;
-            height: 350px;
-            width: auto;
-            z-index: 4;
-            pointer-events: none;
-            transition: transform 0.3s ease-out;
-            /* NOTE: L'URL externe peut causer des erreurs "Access Denied". */
-            /* Remplacez par une URL valide ou une image hébergée localement si nécessaire. */
-        }
-
-        #iron-man-presenter.launching {
-            animation: ironManLaunch 0.5s ease-out forwards;
-        }
-
-        @keyframes ironManLaunch {
-            0% { transform: translateX(0) translateY(0) scale(1); filter: drop-shadow(0 0 5px var(--avengers-red)); }
-            50% { transform: translateX(-15px) translateY(-10px) scale(1.05); filter: drop-shadow(0 0 15px var(--avengers-red)); }
-            100% { transform: translateX(0) translateY(0) scale(1); filter: drop-shadow(0 0 5px var(--avengers-red)); }
-        }
-
-        /* --- Effet Rayon Répulseur --- */
-        #repulsor-ray {
-            position: fixed; /* Ou absolute si parenté à Iron Man */
-            width: 10px; /* Épaisseur du rayon */
-            height: 150px; /* Longueur initiale (sera animée) */
-            background: linear-gradient(to top, rgba(135, 206, 250, 0), var(--repulsor-color), rgba(255,255,255,0.8)); /* Dégradé bleu clair/blanc */
-            border-radius: 5px;
-            opacity: 0; /* Caché par défaut */
-            z-index: 5; /* Au-dessus d'Iron Man */
-            pointer-events: none;
-            /* Positionnement approximatif depuis la main d'Iron Man vers la roue */
-            /* Ces valeurs devront être AJUSTÉES PRÉCISÉMENT en fonction de l'image et de la position d'Iron Man */
-            bottom: 120px; /* Hauteur de la main (estimation) */
-            right: 150px; /* Position horizontale de la main (estimation) */
-            transform-origin: bottom center; /* L'animation part du bas */
-            transform: rotate(-45deg) scaleY(0); /* Orienté vers la roue (estimation) et hauteur 0 */
-        }
-
-        #repulsor-ray.shooting {
-            animation: repulsorShoot 0.4s ease-out forwards;
-        }
-
-        @keyframes repulsorShoot {
-            0% { opacity: 0.5; transform: rotate(-45deg) scaleY(0); } /* Apparaît */
-            50% { opacity: 1; transform: rotate(-45deg) scaleY(1.5); } /* S'étend (longueur 1.5x) */
-            100% { opacity: 0; transform: rotate(-45deg) scaleY(1.5); } /* Disparaît étendu */
-        }
-
-
         /* --- Responsive --- */
         @media (min-width: 900px) {
              .main-content { align-items: center; padding-bottom: 0; }
@@ -473,11 +420,6 @@
             <div class="wheel-container">
                 <div class="pointer"></div>
                 <canvas id="canvas" width="500" height="500"></canvas>
-                <div id="center-logo">
-                    <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-                         <path d="M256 64C150 64 64 150 64 256s86 192 192 192 192-86 192-192S362 64 256 64zm78.4 150.4L288 274.7v113.7h-64v-114l-46.4-60.8h140.8zM256 128c17.6 0 32 14.4 32 32h-64c0-17.6 14.4-32 32-32z"/>
-                    </svg>
-                </div>
             </div>
             <div class="wheel-buttons">
                 <button onclick="spinWheel()">Lancer la roue</button>
@@ -500,7 +442,6 @@
 
     </div>
 
-    <img id="iron-man-presenter" src="https://www.pngkey.com/png/full/10-103807_iron-man-png-transparent-images-iron-man-mark.png" alt="Iron Man, le présentateur">
 
 
     <script>
