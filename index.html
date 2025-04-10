@@ -504,64 +504,73 @@
 
 
     <script>
+        // --- Variables Globales ---
         let wheel;
         let currentData = {};
         let lastParticipantsKey = "";
         const winnerList = [];
+        let fetchIntervalId = null;
 
-        // --- Références DOM ---
-        const participantListUL = document.getElementById('participant-list');
-        const winnerListUL = document.getElementById('winner-list');
-        const gameIdDiv = document.getElementById('game-id');
-        const countSpan = document.getElementById('count');
-        const spinButton = document.querySelector('button[onclick="spinWheel()"]');
-        const canvasElement = document.getElementById('canvas');
-        const context = canvasElement.getContext('2d');
-        const victoryAudio = document.getElementById('victory-audio');
-        const ironManElement = document.getElementById('iron-man-presenter');
-        const repulsorRayElement = document.getElementById('repulsor-ray');
+        // --- Références DOM (seront assignées dans window.onload) ---
+        let participantListUL;
+        let winnerListUL;
+        let gameIdDiv;
+        let countSpan;
+        let spinButton;
+        let canvasElement;
+        let context;
+        let victoryAudio;
+        let ironManElement;
+        let repulsorRayElement;
 
+
+        // --- Fonctions ---
 
         async function fetchParticipants() {
-             console.log("[DEBUG] Fetching participants..."); // DEBUG
+             console.log("[DEBUG] Fetching participants...");
             try {
                 const res = await fetch("https://botcoachbackend.onrender.com/participants");
                  if (!res.ok) {
                      console.error("[DEBUG] Fetch error:", res.status, res.statusText);
-                     gameIdDiv.innerText = "Erreur: Impossible de charger les participants.";
+                     if(gameIdDiv) gameIdDiv.innerText = "Erreur: Impossible de charger les participants.";
                      return;
                  }
                 const data = await res.json();
-                 console.log("[DEBUG] Data received:", data); // DEBUG
+                 console.log("[DEBUG] Data received:", data);
                 const newKey = JSON.stringify(Object.keys(data).sort());
 
                 if (newKey === lastParticipantsKey) {
-                     console.log("[DEBUG] Data unchanged, skipping update."); // DEBUG
+                     console.log("[DEBUG] Data unchanged, skipping update.");
                      return;
                 }
 
                 lastParticipantsKey = newKey;
                 currentData = data;
 
-                console.log("🎯 Participants mis à jour :", data); // Original log
+                console.log("🎯 Participants mis à jour :", data);
                 updateParticipantList();
                 buildWheel();
 
             } catch (error) {
                 console.error("[DEBUG] Error in fetchParticipants:", error);
-                gameIdDiv.innerText = "Erreur réseau lors du chargement.";
+                 if(gameIdDiv) gameIdDiv.innerText = "Erreur réseau lors du chargement.";
             }
         }
 
         function updateParticipantList() {
-             console.log("[DEBUG] Updating participant list UI..."); // DEBUG
+             console.log("[DEBUG] Updating participant list UI...");
+             // Vérifier si l'élément existe (important car appelé avant window.onload potentiellement)
+             if (!participantListUL) {
+                 console.warn("[DEBUG] participantListUL not ready yet in updateParticipantList.");
+                 return;
+             }
             participantListUL.innerHTML = "";
 
             const participantNames = Object.keys(currentData);
-             console.log("[DEBUG] Participant names:", participantNames); // DEBUG
+             console.log("[DEBUG] Participant names:", participantNames);
 
             if (participantNames.length === 0) {
-                 console.log("[DEBUG] No participants found."); // DEBUG
+                 console.log("[DEBUG] No participants found.");
                  const li = document.createElement('li');
                  li.textContent = "Aucun participant pour le moment.";
                  participantListUL.appendChild(li);
@@ -582,18 +591,18 @@
 
                 participantListUL.appendChild(li);
             });
-             console.log("[DEBUG] Finished updating participant list UI."); // DEBUG
+             console.log("[DEBUG] Finished updating participant list UI.");
         }
 
         async function removeParticipant(name, event) {
-             console.log(`[DEBUG] Attempting to remove participant: ${name}`); // DEBUG
+             console.log(`[DEBUG] Attempting to remove participant: ${name}`);
              const removeButton = event.target;
             removeButton.disabled = true;
 
             const confirmDelete = confirm(`Supprimer ${name} de la roue ?`);
             if (!confirmDelete) {
                 removeButton.disabled = false;
-                 console.log("[DEBUG] Removal cancelled by user."); // DEBUG
+                 console.log("[DEBUG] Removal cancelled by user.");
                 return;
             }
 
@@ -608,10 +617,10 @@
                     removeButton.disabled = false;
                     return;
                  }
-                 console.log(`[DEBUG] Participant ${name} removed successfully from backend.`); // DEBUG
+                 console.log(`[DEBUG] Participant ${name} removed successfully from backend.`);
 
                  delete currentData[name];
-                 lastParticipantsKey = ""; // Force refresh/rebuild
+                 lastParticipantsKey = "";
                  updateParticipantList();
                  buildWheel();
 
@@ -623,19 +632,24 @@
         }
 
         function buildWheel() {
-             console.log("[DEBUG] buildWheel called."); // DEBUG
+             console.log("[DEBUG] buildWheel called.");
+             // Vérifier si les éléments sont prêts
+             if (!canvasElement || !context || !spinButton) {
+                 console.warn("[DEBUG] buildWheel called before DOM elements are ready.");
+                 return;
+             }
+
              const names = Object.keys(currentData);
              const hasParticipants = names.length > 0;
-             console.log(`[DEBUG] Participants count: ${names.length}, Has participants: ${hasParticipants}`); // DEBUG
+             console.log(`[DEBUG] Participants count: ${names.length}, Has participants: ${hasParticipants}`);
 
             context.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
             if (wheel) {
-                 console.log("[DEBUG] Destroying previous wheel instance."); // DEBUG
+                 console.log("[DEBUG] Destroying previous wheel instance.");
                 try {
-                    // Correction: Vérifier si isAnimating est défini avant de l'appeler
                     if (typeof wheel.isAnimating !== 'undefined' && wheel.isAnimating) {
-                        console.log("[DEBUG] Stopping animation before destroying."); // DEBUG
+                        console.log("[DEBUG] Stopping animation before destroying.");
                         wheel.stopAnimation(false);
                     }
                     wheel.destroy();
@@ -645,7 +659,7 @@
 
 
             if (!hasParticipants) {
-                 console.log("[DEBUG] No participants, disabling spin button and showing message."); // DEBUG
+                 console.log("[DEBUG] No participants, disabling spin button and showing message.");
                  context.save();
                  context.fillStyle = 'rgba(0,0,0,0.6)';
                  context.fillRect(0, 0, canvasElement.width, canvasElement.height);
@@ -656,9 +670,9 @@
                  context.fillText("Ajoutez des participants !", canvasElement.width / 2, canvasElement.height / 2);
                  context.restore();
                  spinButton.disabled = true;
-                 return; // Important: Ne pas créer la roue si pas de participants
+                 return;
              } else {
-                 console.log("[DEBUG] Enabling spin button."); // DEBUG
+                 console.log("[DEBUG] Enabling spin button.");
                  spinButton.disabled = false;
              }
 
@@ -667,7 +681,7 @@
                 '#D83C2D', '#005BBB', '#FFD700', '#008000', '#A9A9A9'
             ];
 
-             console.log("[DEBUG] Creating new Winwheel instance..."); // DEBUG
+             console.log("[DEBUG] Creating new Winwheel instance...");
              try {
                 wheel = new Winwheel({
                     canvasId: 'canvas',
@@ -702,81 +716,86 @@
                     lineWidth: 3,
                     strokeStyle: "#000000",
                 });
-                 console.log("[DEBUG] Winwheel instance created successfully.", wheel); // DEBUG
+                 console.log("[DEBUG] Winwheel instance created successfully.", wheel);
              } catch (error) {
-                  console.error("[DEBUG] Error creating Winwheel instance:", error); // DEBUG
-                  // Peut-être désactiver le bouton ou afficher une erreur si la création échoue
+                  console.error("[DEBUG] Error creating Winwheel instance:", error);
                   spinButton.disabled = true;
              }
         }
 
         function spinWheel() {
-             console.log("[DEBUG] spinWheel called."); // DEBUG
-             console.log(`[DEBUG] Checking conditions: wheel=${!!wheel}, isAnimating=${wheel ? wheel.isAnimating : 'N/A'}`); // DEBUG
+             console.log("[DEBUG] spinWheel called.");
+             // Vérifier si les éléments nécessaires existent
+             if (!wheel || !ironManElement || !repulsorRayElement || !victoryAudio || !spinButton) {
+                 console.error("[DEBUG] spinWheel called before all elements are ready.");
+                 return;
+             }
+             console.log(`[DEBUG] Checking conditions: isAnimating=${wheel.isAnimating}`);
 
-            if (!wheel || wheel.isAnimating || !ironManElement || !repulsorRayElement) {
-                 console.log("[DEBUG] spinWheel condition not met, returning."); // DEBUG
-                 // Si wheel n'existe pas, le bouton devrait être désactivé par buildWheel,
-                 // mais on peut le re-désactiver par sécurité.
-                 if (!wheel) spinButton.disabled = true;
+            if (wheel.isAnimating) { // Simplifié car !wheel est déjà vérifié implicitement
+                 console.log("[DEBUG] spinWheel condition (isAnimating) not met, returning.");
                 return;
             }
-             console.log("[DEBUG] Conditions met, proceeding with spin."); // DEBUG
+             console.log("[DEBUG] Conditions met, proceeding with spin.");
             spinButton.disabled = true;
 
             victoryAudio.pause();
             victoryAudio.currentTime = 0;
 
             // Animer Iron Man
-             console.log("[DEBUG] Animating Iron Man."); // DEBUG
+             console.log("[DEBUG] Animating Iron Man.");
             ironManElement.classList.add('launching');
              ironManElement.addEventListener('animationend', () => {
                  ironManElement.classList.remove('launching');
-                 console.log("[DEBUG] Iron Man animation ended."); // DEBUG
+                 console.log("[DEBUG] Iron Man animation ended.");
              }, { once: true });
 
             // Animer le rayon répulseur
-             console.log("[DEBUG] Animating Repulsor Ray."); // DEBUG
+             console.log("[DEBUG] Animating Repulsor Ray.");
             repulsorRayElement.classList.add('shooting');
              repulsorRayElement.addEventListener('animationend', () => {
                  repulsorRayElement.classList.remove('shooting');
-                 console.log("[DEBUG] Repulsor Ray animation ended."); // DEBUG
+                 console.log("[DEBUG] Repulsor Ray animation ended.");
              }, { once: true });
 
             // Démarrer la roue après un court délai
-             console.log("[DEBUG] Setting timeout to start wheel animation."); // DEBUG
+             console.log("[DEBUG] Setting timeout to start wheel animation.");
             setTimeout(() => {
+                 // Re-vérifier wheel au cas où quelque chose l'aurait détruit entre temps
                  if (wheel) {
-                     console.log("[DEBUG] Starting wheel animation."); // DEBUG
+                     console.log("[DEBUG] Starting wheel animation.");
                     wheel.startAnimation();
                  } else {
-                     // Ce cas ne devrait pas arriver si les vérifications initiales sont correctes
-                     console.warn("[DEBUG] Wheel became null before animation start timeout?"); // DEBUG
-                     spinButton.disabled = false;
+                     console.warn("[DEBUG] Wheel became null before animation start timeout?");
+                     spinButton.disabled = false; // Réactiver si l'animation n'a pas pu démarrer
                  }
             }, 100);
 
         }
 
         function alertWinner(indicatedSegment) {
-             console.log("[DEBUG] alertWinner called with segment:", indicatedSegment); // DEBUG
-             spinButton.disabled = false; // Réactiver le bouton
+             console.log("[DEBUG] alertWinner called with segment:", indicatedSegment);
+             if (!spinButton || !gameIdDiv || !countSpan || !victoryAudio) { // Vérifier si éléments existent
+                 console.error("[DEBUG] alertWinner called before elements are ready.");
+                 return;
+             }
+             spinButton.disabled = false;
 
              if (!indicatedSegment || !indicatedSegment.text) {
-                 console.warn("[DEBUG] Invalid segment received in alertWinner."); // DEBUG
+                 console.warn("[DEBUG] Invalid segment received in alertWinner.");
                  gameIdDiv.innerText = `🤔 Oups, réessayez !`;
                  return;
              }
 
             const winner = indicatedSegment.text.replace('...', '');
             const fullWinnerName = Object.keys(currentData).find(name => name.startsWith(winner)) || winner;
-             console.log(`[DEBUG] Winner determined: ${fullWinnerName}`); // DEBUG
+             console.log(`[DEBUG] Winner determined: ${fullWinnerName}`);
 
 
             const gameID = currentData[fullWinnerName] || "Pas d'ID";
             gameIdDiv.innerText = `🏆 ${fullWinnerName} est coaché(e) ! (ID: ${gameID}) 🎉`;
 
-             console.log("[DEBUG] Triggering confetti."); // DEBUG
+             console.log("[DEBUG] Triggering confetti.");
             confetti({
                 particleCount: 200,
                 spread: 100,
@@ -784,7 +803,7 @@
                 colors: ['#E62429', '#0A7FDE', '#F5C132', '#FFFFFF', '#C0C0C0']
             });
 
-             console.log("[DEBUG] Playing victory sound."); // DEBUG
+             console.log("[DEBUG] Playing victory sound.");
             victoryAudio.play().catch(e => console.error("[DEBUG] Error playing audio:", e));
 
             winnerList.push(fullWinnerName);
@@ -793,16 +812,20 @@
             let count = parseInt(countSpan.innerText);
             countSpan.innerText = count + 1;
 
-             console.log(`[DEBUG] Deleting winner ${fullWinnerName} from currentData.`); // DEBUG
+             console.log(`[DEBUG] Deleting winner ${fullWinnerName} from currentData.`);
             delete currentData[fullWinnerName];
-            lastParticipantsKey = ""; // Force refresh/rebuild
+            lastParticipantsKey = "";
 
-             console.log("[DEBUG] Scheduling wheel rebuild after winner."); // DEBUG
+             console.log("[DEBUG] Scheduling wheel rebuild after winner.");
             setTimeout(() => buildWheel(), 2000);
         }
 
         function updateWinnerList() {
-             console.log("[DEBUG] Updating winner list UI."); // DEBUG
+             console.log("[DEBUG] Updating winner list UI.");
+             if (!winnerListUL) { // Vérifier si prêt
+                 console.warn("[DEBUG] winnerListUL not ready yet in updateWinnerList.");
+                 return;
+             }
              winnerListUL.innerHTML = "";
             if (winnerList.length === 0) {
                  const li = document.createElement('li');
@@ -815,24 +838,29 @@
                 li.textContent = `🦸 ${name}`;
                 winnerListUL.appendChild(li);
             });
-             console.log("[DEBUG] Finished updating winner list UI."); // DEBUG
+             console.log("[DEBUG] Finished updating winner list UI.");
         }
 
         async function resetWheel() {
-             console.log("[DEBUG] resetWheel called."); // DEBUG
-            if (wheel && wheel.isAnimating) { // Correction: propriété
-                 console.log("[DEBUG] Reset cancelled, wheel is animating."); // DEBUG
+             console.log("[DEBUG] resetWheel called.");
+             if (!wheel || !gameIdDiv || !countSpan) { // Vérifier éléments
+                  console.error("[DEBUG] resetWheel called before elements are ready.");
+                  return;
+             }
+
+            if (wheel.isAnimating) {
+                 console.log("[DEBUG] Reset cancelled, wheel is animating.");
                  alert("Attendez la fin de la rotation !");
                  return;
              }
 
             const confirmReset = confirm("Voulez-vous vraiment réinitialiser et supprimer tous les participants et coachés ?");
             if (!confirmReset) {
-                 console.log("[DEBUG] Reset cancelled by user."); // DEBUG
+                 console.log("[DEBUG] Reset cancelled by user.");
                  return;
             }
 
-             console.log("[DEBUG] Proceeding with reset."); // DEBUG
+             console.log("[DEBUG] Proceeding with reset.");
             gameIdDiv.innerText = '';
             currentData = {};
             lastParticipantsKey = "";
@@ -842,7 +870,7 @@
             countSpan.innerText = '0';
 
             try {
-                 console.log("[DEBUG] Sending reset request to backend."); // DEBUG
+                 console.log("[DEBUG] Sending reset request to backend.");
                 const response = await fetch("https://botcoachbackend.onrender.com/participants", {
                     method: 'DELETE'
                 });
@@ -850,9 +878,8 @@
                      console.error("[DEBUG] Backend reset error:", response.statusText);
                      alert("Erreur lors de la réinitialisation côté serveur.");
                  } else {
-                      console.log("[DEBUG] Backend reset successful."); // DEBUG
+                      console.log("[DEBUG] Backend reset successful.");
                  }
-                // Reconstruire la roue vide immédiatement
                 buildWheel();
             } catch (error) {
                  console.error("[DEBUG] Network error during reset:", error);
@@ -861,29 +888,52 @@
         }
 
         // --- Initialisation ---
-        let fetchIntervalId = null;
         window.onload = function() {
-             console.log("[DEBUG] Window loaded, initializing."); // DEBUG
+             console.log("[DEBUG] Window loaded, initializing.");
+
+             // *** Assignation des références DOM ici ***
+             participantListUL = document.getElementById('participant-list');
+             winnerListUL = document.getElementById('winner-list');
+             gameIdDiv = document.getElementById('game-id');
+             countSpan = document.getElementById('count');
+             spinButton = document.querySelector('button[onclick="spinWheel()"]');
+             canvasElement = document.getElementById('canvas');
+             context = canvasElement.getContext('2d');
+             victoryAudio = document.getElementById('victory-audio');
+             ironManElement = document.getElementById('iron-man-presenter');
+             repulsorRayElement = document.getElementById('repulsor-ray');
+
+             // Vérifier si les éléments principaux sont trouvés
+             if (!spinButton || !canvasElement || !victoryAudio || !ironManElement || !repulsorRayElement) {
+                 console.error("[DEBUG] CRITICAL: One or more essential DOM elements not found on load!");
+                 // Afficher une erreur à l'utilisateur ?
+                 if(gameIdDiv) gameIdDiv.innerText = "Erreur critique: La page n'a pas pu s'initialiser correctement.";
+                 return; // Arrêter l'initialisation si des éléments clés manquent
+             }
+             console.log("[DEBUG] DOM elements assigned.");
+
+
              fetchParticipants(); // Charger les données initiales
              updateWinnerList(); // Initialiser la liste des gagnants (vide)
+
              // Lancer le fetch périodique
-             if (fetchIntervalId) clearInterval(fetchIntervalId); // Nettoyer au cas où
-             fetchIntervalId = setInterval(fetchParticipants, 5000); // Récupérer toutes les 5s
-             console.log("[DEBUG] Fetch interval started."); // DEBUG
+             if (fetchIntervalId) clearInterval(fetchIntervalId);
+             fetchIntervalId = setInterval(fetchParticipants, 5000);
+             console.log("[DEBUG] Fetch interval started.");
         };
 
         document.addEventListener("visibilitychange", function() {
-             console.log(`[DEBUG] Visibility changed: ${document.hidden ? 'hidden' : 'visible'}`); // DEBUG
+             console.log(`[DEBUG] Visibility changed: ${document.hidden ? 'hidden' : 'visible'}`);
           if (document.hidden) {
             if (fetchIntervalId) {
-                 console.log("[DEBUG] Clearing fetch interval due to hidden tab."); // DEBUG
+                 console.log("[DEBUG] Clearing fetch interval due to hidden tab.");
                  clearInterval(fetchIntervalId);
                  fetchIntervalId = null;
             }
           } else {
-            if (!fetchIntervalId) { // Relancer seulement s'il était arrêté
-                 console.log("[DEBUG] Tab visible, restarting fetch interval."); // DEBUG
-                fetchParticipants(); // Fetch immédiat au retour
+            if (!fetchIntervalId) {
+                 console.log("[DEBUG] Tab visible, restarting fetch interval.");
+                fetchParticipants();
                 fetchIntervalId = setInterval(fetchParticipants, 5000);
             }
           }
